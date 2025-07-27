@@ -1,65 +1,55 @@
-const canvas = document.getElementById('forecastCanvas');
-const ctx = canvas.getContext('2d');
-const status = document.getElementById('status');
+// Select DOM elements
+const tfSelect   = document.getElementById('tf-select');
+const btnForecast = document.getElementById('btn-forecast');
+const statusEl    = document.getElementById('status');
+const chartCanvas = document.getElementById('chart');
+const ctx         = chartCanvas.getContext('2d');
 
-async function getForecast() {
-    const timeframe = document.getElementById('timeframe').value;
-    status.innerText = 'Simulating price fetch...';
+// Add click handler
+btnForecast.addEventListener('click', () => {
+  const tf = tfSelect.value;
+  statusEl.textContent = `Generating mock forecast for ${tf}...`;
 
-    // Simulated bar data: random close prices around 1940
-    const closePrices = [];
-    let base = 1940 + Math.random();
-    for (let i = 0; i < 20; i++) {
-        base += (Math.random() - 0.5); // small fluctuation
-        closePrices.push(base);
-    }
+  // Generate mock price data
+  const prices = [];
+  let base = 1940 + Math.random();
+  for (let i = 0; i < 50; i++) {
+    base += (Math.random() - 0.5); // small variation
+    prices.push(base);
+  }
 
-    status.innerText = 'Calling AI prediction...';
+  // Generate mock forecast
+  const last = prices[prices.length - 1];
+  const forecast = last + (Math.random() * 2 - 1); // +/- $1
 
-    // Simulated forecast based on last close
-    const lastClose = closePrices[closePrices.length - 1];
-    const forecast = lastClose + (Math.random() * 2 - 1); // +/- $1 range
+  drawChart(prices, forecast);
+  statusEl.textContent = `Forecasted price: $${forecast.toFixed(2)} (${tf})`;
+});
 
-    drawChart(closePrices, forecast, timeframe);
+// Simple chart drawing
+function drawChart(data, forecast) {
+  ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+  const step = chartCanvas.width / (data.length + 1);
+  const min = Math.min(...data, forecast);
+  const max = Math.max(...data, forecast);
+  const scale = chartCanvas.height / (max - min);
 
-    status.innerText = `Forecast for ${timeframe}: $${forecast.toFixed(2)}`;
-}
+  // Draw price line
+  ctx.beginPath();
+  ctx.strokeStyle = 'blue';
+  data.forEach((val, i) => {
+    const x = i * step;
+    const y = chartCanvas.height - (val - min) * scale;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
 
-function drawChart(prices, forecast, timeframe) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const padding = 30;
-    const chartW = w - padding * 2;
-    const chartH = h - padding * 2;
-
-    const maxPrice = Math.max(...prices, forecast);
-    const minPrice = Math.min(...prices, forecast);
-    const range = maxPrice - minPrice;
-
-    const pxPerUnit = chartH / range;
-
-    // Draw line chart for prices
-    ctx.beginPath();
-    ctx.strokeStyle = '#4CAF50';
-    prices.forEach((p, i) => {
-        const x = padding + (i / (prices.length - 1)) * chartW;
-        const y = h - padding - ((p - minPrice) * pxPerUnit);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    // Draw forecast point
-    const forecastX = w - padding;
-    const forecastY = h - padding - ((forecast - minPrice) * pxPerUnit);
-    ctx.beginPath();
-    ctx.arc(forecastX, forecastY, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = '#FF5722';
-    ctx.fill();
-
-    // Draw text
-    ctx.fillStyle = '#000';
-    ctx.fillText(`Forecast: $${forecast.toFixed(2)}`, forecastX - 100, forecastY - 10);
+  // Draw forecast point
+  const fx = data.length * step;
+  const fy = chartCanvas.height - (forecast - min) * scale;
+  ctx.fillStyle = 'red';
+  ctx.beginPath();
+  ctx.arc(fx, fy, 5, 0, 2 * Math.PI);
+  ctx.fill();
 }
