@@ -26,5 +26,14 @@
   </div>
 
   <script src="script.js"></script>
+
+
+  <div id="log" style="font-family:monospace;color:darkgreen;font-size:12px;margin-top:10px;"></div>
+<script>
+  const logDiv = document.getElementById("log");
+  console.log = (msg) => { logDiv.innerText += msg + '\n'; };
+</script>
+
+  
 </body>
 </html>
