@@ -1,77 +1,65 @@
-// 1. Ensure we have a bridge to Automate
-const ctrader = window.cTrader || window.cT;  
+const canvas = document.getElementById('forecastCanvas');
+const ctx = canvas.getContext('2d');
+const status = document.getElementById('status');
 
-// 2. UI elements
-const tfSelect   = document.getElementById('tf-select');
-const btnForecast = document.getElementById('btn-forecast');
-const statusEl    = document.getElementById('status');
-const chartCanvas = document.getElementById('chart');
-const ctx         = chartCanvas.getContext('2d');
+async function getForecast() {
+    const timeframe = document.getElementById('timeframe').value;
+    status.innerText = 'Simulating price fetch...';
 
-// 3. Handler
-btnForecast.addEventListener('click', async () => {
-  const tf = tfSelect.value;
-  statusEl.textContent = `Fetching ${tf} bars…`;
+    // Simulated bar data: random close prices around 1940
+    const closePrices = [];
+    let base = 1940 + Math.random();
+    for (let i = 0; i < 20; i++) {
+        base += (Math.random() - 0.5); // small fluctuation
+        closePrices.push(base);
+    }
 
-  try {
-    // 4. Fetch historical bars from cTrader
-    const bars = await ctrader.symbols.getBars({
-      symbol: 'XAU/USD',
-      timeframe: tf,
-      count: tf === '1d' ? 48 : 100  // e.g. last 100 bars / 2 days for daily
+    status.innerText = 'Calling AI prediction...';
+
+    // Simulated forecast based on last close
+    const lastClose = closePrices[closePrices.length - 1];
+    const forecast = lastClose + (Math.random() * 2 - 1); // +/- $1 range
+
+    drawChart(closePrices, forecast, timeframe);
+
+    status.innerText = `Forecast for ${timeframe}: $${forecast.toFixed(2)}`;
+}
+
+function drawChart(prices, forecast, timeframe) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const padding = 30;
+    const chartW = w - padding * 2;
+    const chartH = h - padding * 2;
+
+    const maxPrice = Math.max(...prices, forecast);
+    const minPrice = Math.min(...prices, forecast);
+    const range = maxPrice - minPrice;
+
+    const pxPerUnit = chartH / range;
+
+    // Draw line chart for prices
+    ctx.beginPath();
+    ctx.strokeStyle = '#4CAF50';
+    prices.forEach((p, i) => {
+        const x = padding + (i / (prices.length - 1)) * chartW;
+        const y = h - padding - ((p - minPrice) * pxPerUnit);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
     });
+    ctx.stroke();
 
-    statusEl.textContent = 'Calling AI prediction…';
+    // Draw forecast point
+    const forecastX = w - padding;
+    const forecastY = h - padding - ((forecast - minPrice) * pxPerUnit);
+    ctx.beginPath();
+    ctx.arc(forecastX, forecastY, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FF5722';
+    ctx.fill();
 
-    // 5. Prepare payload
-    const payload = {
-      symbol: 'XAUUSD',
-      timeframe: tf,
-      bars: bars.map(b => ({
-        time: b.time, open: b.open, high: b.high, low: b.low, close: b.close
-      }))
-    };
-
-    // 6. Call your AI-forecast API
-    const resp = await fetch('https://api.deepseek.ai/forecast', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': 'YOUR_API_KEY_HERE'
-      },
-      body: JSON.stringify(payload)
-    });
-    const { forecast, target } = await resp.json();
-
-    statusEl.textContent = `Forecast: ${forecast.toFixed(2)}   Target: ${target.toFixed(2)}`;
-
-    // 7. (Optional) Draw simple chart of recent closes + forecast point
-    const closes = bars.map(b => b.close);
-    drawChart(closes, forecast);
-
-  } catch (err) {
-    console.error(err);
-    statusEl.textContent = 'Error: ' + err.message;
-  }
-});
-
-// 8. Simple line chart
-function drawChart(data, forecast) {
-  ctx.clearRect(0,0,chartCanvas.width,chartCanvas.height);
-  ctx.beginPath();
-  const step = chartCanvas.width / (data.length);
-  data.forEach((v,i) => {
-    const y = chartCanvas.height - (v - Math.min(...data)) / (Math.max(...data)-Math.min(...data)) * chartCanvas.height;
-    if (i === 0) ctx.moveTo(0, y);
-    else       ctx.lineTo(i*step, y);
-  });
-  ctx.stroke();
-
-  // forecast marker
-  const fxX = data.length*step;
-  const fxY = chartCanvas.height - (forecast - Math.min(...data)) / (Math.max(...data)-Math.min(...data)) * chartCanvas.height;
-  ctx.fillStyle = 'red';
-  ctx.beginPath();
-  ctx.arc(fxX, fxY, 5, 0, 2*Math.PI);
-  ctx.fill();
+    // Draw text
+    ctx.fillStyle = '#000';
+    ctx.fillText(`Forecast: $${forecast.toFixed(2)}`, forecastX - 100, forecastY - 10);
 }
