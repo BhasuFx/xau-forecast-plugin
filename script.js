@@ -10,6 +10,10 @@ btnForecast.addEventListener('click', () => {
   const tf = tfSelect.value;
   statusEl.textContent = `Generating mock forecast for ${tf}...`;
 
+
+  console.log("Clicked the button");
+
+
   // Generate mock price data
   const prices = [];
   let base = 1940 + Math.random();
