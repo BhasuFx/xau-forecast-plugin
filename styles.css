@@ -1,0 +1,4 @@
+body { font-family: sans-serif; margin: 10px; }
+#controls { margin-bottom: 1em; }
+#result { border: 1px solid #ccc; padding: 1em; border-radius: 4px; }
+canvas { background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }

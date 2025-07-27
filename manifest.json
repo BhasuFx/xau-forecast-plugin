@@ -1,0 +1,15 @@
+{
+  "name": "XAUUSD Price Forecast",
+  "version": "1.0.0",
+  "description": "AI-powered XAU/USD price predictions on multiple timeframes",
+  "author": "Your Name",
+  "cTrader": {
+    "requiredVersion": "4.0.0",
+    "addInType": "WebView"
+  },
+  "entry": "index.html",
+  "permissions": [
+    "Symbols.GetBars",      
+    "Notifications.Send"    
+  ]
+}
